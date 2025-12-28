@@ -1,5 +1,7 @@
 import React from 'react'
 import PageHero from '../components/OtherContent/PageHero'
+import ContactBanner from '../components/ContactContent/ContactBanner'
+import ContactForm from '../components/ContactContent/ContactForm'
 
 const Contact = () => {
   return (
@@ -7,8 +9,10 @@ const Contact = () => {
       <PageHero
         title="Get in Touch with Our Team"
         description="Have questions? Our support team is here to help you navigate bulk pharmaceutical trade with confidence."
-        gradient="from-rose-700 via-pink-700 to-rose-800"
+        gradient="from-cyan-700 via-teal-700 to-emerald-800"
       />
+      <ContactBanner />
+      <ContactForm />
     </div>
   )
 }

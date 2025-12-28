@@ -8,7 +8,7 @@ const Shipping = () => {
       <PageHero
         title="Reliable B2B Shipping Solutions"
         description="Optimized logistics and trusted partners ensure safe, fast, and compliant delivery of bulk pharmaceutical orders."
-        gradient="from-sky-700 via-blue-700 to-indigo-800"
+        gradient="from-teal-500 via-emerald-600 to-slate-700"
       />
       <ShippingInfo />
     </div>

@@ -67,7 +67,7 @@ const AnimatedDots = () => {
 /* -------------------- MAIN COMPONENT -------------------- */
 export default function HowItWorksTimeline() {
   return (
-    <section className="relative py-28 bg-gradient-to-b from-slate-50 to-white overflow-hidden">
+    <section className="relative py-28 bg-linear-to-b from-slate-50 to-white overflow-hidden">
 
       {/* Animated Background */}
       <AnimatedDots />
@@ -100,7 +100,7 @@ export default function HowItWorksTimeline() {
             whileInView={{ height: "100%" }}
             viewport={{ once: true }}
             transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute left-5 md:left-1/2 top-0 w-[3px] bg-gradient-to-b from-teal-500 to-emerald-600 rounded-full"
+            className="absolute left-5 md:left-1/2 top-0 w-0.75 bg-linear-to-b from-teal-500 to-emerald-600 rounded-full"
           />
 
           {/* Steps */}

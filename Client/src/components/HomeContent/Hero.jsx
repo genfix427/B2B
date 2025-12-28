@@ -48,9 +48,10 @@ export default function Hero() {
             B2B Marketplace for Pharmacists
           </span>
 
-          <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight">
-            The Trusted Platform for
-            <span className="text-teal-600"> Bulk Medicine Trading</span>
+          <h1 className="text-2xl md:text-3xl xl:text-4xl font-bold text-gray-900 leading-tight">
+            A secure pharmacy-to-pharmacy marketplace
+            <span className="text-teal-600"> for buying and selling overstocked inventory.</span> 
+            
           </h1>
 
           <p className="mt-6 text-lg text-gray-600 max-w-xl">

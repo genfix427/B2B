@@ -17,7 +17,8 @@ const pharmacySchema = new mongoose.Schema({
       stateTaxID: String,
       globalLocationNumber: String,
       isMailingSameAsShipping: Boolean,
-      mailingAddress: Object
+      mailingAddress: Object,
+      email: String
     },
     // Step 2
     step2: {
@@ -56,17 +57,35 @@ const pharmacySchema = new mongoose.Schema({
     select: false
   },
 
+  // Role and permissions
+  role: {
+    type: String,
+    enum: ['vendor', 'admin'],
+    default: 'vendor'
+  },
+
   // Documents (uploaded separately)
   documents: {
-    deaLicense: String,
-    stateLicense: String,
-    businessLicense: String,
-    einDocument: String,
-    w9Form: String,
-    voidedCheck: String,
-    additionalDoc1: String,
-    additionalDoc2: String,
-    uploadedAt: Date
+    deaLicense: { type: String },
+    stateLicense: { type: String },
+    businessLicense: { type: String },
+    einDocument: { type: String },
+    w9Form: { type: String },
+    voidedCheck: { type: String },
+    additionalDoc1: { type: String },
+    additionalDoc2: { type: String },
+    uploadedAt: Date,
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    reviewNotes: String,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    reviewedAt: Date
   },
 
   // Account Status
@@ -95,24 +114,57 @@ const pharmacySchema = new mongoose.Schema({
   documentsUploaded: {
     type: Boolean,
     default: false
+  },
+
+  // Profile
+  profile: {
+    profileImage: String,
+    businessDescription: String,
+    website: String,
+    yearEstablished: Number,
+    averageMonthlyVolume: String,
+    specialties: [String],
+    additionalNotes: String,
+    updatedAt: Date
+  },
+
+  // Activity Tracking
+  lastLogin: Date,
+  loginCount: {
+    type: Number,
+    default: 0
+  },
+  status: {
+    type: String,
+    enum: ['active', 'suspended', 'inactive'],
+    default: 'active'
   }
 }, {
   timestamps: true
 });
 
-// Hash password before saving
+// Hash password before saving - FIXED: Handle async properly
 pharmacySchema.pre('save', async function(next) {
+  // Only hash the password if it has been modified
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Compare password method
 pharmacySchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// REMOVED the updateLoginStats method - we'll handle it in controller
 
 const User = mongoose.model('User', pharmacySchema);
 

@@ -123,27 +123,41 @@ const updateVendorVerification = asyncHandler(async (req, res) => {
 const updateVendorStatus = asyncHandler(async (req, res) => {
   const { status, notes } = req.body;
   
+  // Validate status
+  if (!['active', 'suspended', 'inactive'].includes(status)) {
+    res.status(400);
+    throw new Error('Invalid status. Must be active, suspended, or inactive');
+  }
+
   const vendor = await User.findById(req.params.id);
 
-  if (vendor && vendor.role === 'vendor') {
-    vendor.status = status;
-    
-    if (notes) {
-      vendor.verificationNotes = notes;
-    }
-
-    const updatedVendor = await vendor.save();
-
-    res.json({
-      _id: updatedVendor._id,
-      legalBusinessName: updatedVendor.registrationData?.step1?.legalBusinessName,
-      status: updatedVendor.status,
-      message: 'Vendor status updated successfully'
-    });
-  } else {
+  if (!vendor) {
     res.status(404);
     throw new Error('Vendor not found');
   }
+
+  if (vendor.role !== 'vendor') {
+    res.status(400);
+    throw new Error('User is not a vendor');
+  }
+
+  // Update vendor status
+  vendor.status = status;
+  
+  // Add notes if provided
+  if (notes) {
+    vendor.verificationNotes = notes;
+  }
+
+  const updatedVendor = await vendor.save();
+
+  res.json({
+    _id: updatedVendor._id,
+    legalBusinessName: updatedVendor.registrationData?.step1?.legalBusinessName,
+    status: updatedVendor.status,
+    verificationStatus: updatedVendor.verificationStatus,
+    message: 'Vendor status updated successfully'
+  });
 });
 
 // @desc    Review vendor documents

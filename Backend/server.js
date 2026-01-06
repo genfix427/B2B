@@ -16,12 +16,14 @@ connectDB();
 const app = express();
 
 // Security middleware
-app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  origin: [
+    process.env.FRONTEND_URL, // Client frontend
+    process.env.ADMIN_URL, // Admin frontend
+    "http://localhost:5173",
+    "http://localhost:5174"
+  ],
+  credentials: true
 }));
 
 // Handle preflight requests

@@ -144,20 +144,15 @@ const pharmacySchema = new mongoose.Schema({
 });
 
 // Hash password before saving - FIXED: Handle async properly
-pharmacySchema.pre('save', async function(next) {
-  // Only hash the password if it has been modified
-  if (!this.isModified('password')) {
-    return next();
-  }
+// Hash password before saving (CORRECT – modern mongoose)
+pharmacySchema.pre('save', async function () {
+  // Only hash if password was modified
+  if (!this.isModified('password')) return;
 
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
+
 
 // Compare password method
 pharmacySchema.methods.matchPassword = async function(enteredPassword) {

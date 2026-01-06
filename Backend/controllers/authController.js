@@ -51,7 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (user) {
     generateToken(res, user._id);
-    
+
     res.status(201).json({
       _id: user._id,
       email: user.email,
@@ -209,13 +209,13 @@ const loginUser = asyncHandler(async (req, res) => {
 const getCurrentUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select('-password');
 
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404);
-    throw new Error('User not found');
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
   }
+
+  res.json(user);
 });
+
 
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
@@ -294,7 +294,7 @@ const uploadDocumentsProfile = asyncHandler(async (req, res) => {
   if (!user.registrationCompleted) {
     user.registrationCompleted = true;
     user.registrationSubmittedAt = new Date();
-    
+
     // Send admin notification
     await sendAdminNotification(user);
   }

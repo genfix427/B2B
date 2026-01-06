@@ -13,9 +13,11 @@ import { protect, admin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
+// Apply auth middleware to all admin routes
 router.use(protect);
 router.use(admin);
 
+// Routes
 router.get('/vendors/pending', getPendingVendors);
 router.get('/vendors', getAllVendors);
 router.get('/vendors/:id', getVendorById);

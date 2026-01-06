@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserLoggedIn = async () => {
     try {
-      const data = await fetchWithAuth('/api/auth/me');
+      const data = await fetchWithAuth('http://localhost:5000/api/auth/me');
       // Check if user is admin
       if (data.role === 'admin') {
         setUser(data);
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const data = await fetchWithAuth('/api/auth/login', {
+      const data = await fetchWithAuth('http://localhost:5000/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetchWithAuth('/api/auth/logout', { method: 'POST' });
+      await fetchWithAuth('http://localhost:5000/api/auth/logout', { method: 'POST' });
       setUser(null);
       toast.success('Logged out successfully');
     } catch (error) {

@@ -28,10 +28,12 @@ const createAdmin = async () => {
       documentsUploaded: true,
       profile: {
         businessDescription: 'System Administrator'
-      }
+      },
+      status: 'active'
     });
 
     console.log('Admin user created successfully:', admin.email);
+    console.log('Credentials: admin@matchrx.com / Admin@1234');
     process.exit(0);
   } catch (error) {
     console.error('Error creating admin:', error);

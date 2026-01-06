@@ -3,25 +3,19 @@ import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 import { sendVerificationEmail, sendAdminNotification } from '../utils/emailService.js';
 
-// @desc    Register new user (Step 1)
-// @route   POST /api/auth/register/step1
+// @desc    Register new user with all steps data
+// @route   POST /api/auth/register
 // @access  Public
-const registerStep1 = asyncHandler(async (req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
   const {
-    npiNumber,
-    legalBusinessName,
-    doingBusinessAs,
-    shippingAddress,
-    phone,
-    fax,
-    timezone,
-    federalEIN,
-    stateTaxID,
-    globalLocationNumber,
-    isMailingSameAsShipping,
-    mailingAddress,
     email,
-    password
+    password,
+    step1,
+    step2,
+    step3,
+    step4,
+    step5,
+    step6
   } = req.body;
 
   // Check if user exists
@@ -32,29 +26,27 @@ const registerStep1 = asyncHandler(async (req, res) => {
   }
 
   // Check if NPI exists
-  const npiExists = await User.findOne({ npiNumber });
-  if (npiExists) {
-    res.status(400);
-    throw new Error('NPI number already registered');
+  if (step1 && step1.npiNumber) {
+    const npiExists = await User.findOne({ 'registrationData.step1.npiNumber': step1.npiNumber });
+    if (npiExists) {
+      res.status(400);
+      throw new Error('NPI number already registered');
+    }
   }
 
-  // Create user with step 1 data
+  // Create user with all registration data
   const user = await User.create({
-    npiNumber,
-    legalBusinessName,
-    doingBusinessAs,
-    shippingAddress,
-    phone,
-    fax,
-    timezone,
-    federalEIN,
-    stateTaxID,
-    globalLocationNumber,
-    isMailingSameAsShipping,
-    mailingAddress: isMailingSameAsShipping ? shippingAddress : mailingAddress,
     email,
     password,
-    registrationStep: 1
+    registrationData: {
+      step1,
+      step2,
+      step3,
+      step4,
+      step5,
+      step6
+    },
+    registrationSubmittedAt: new Date()
   });
 
   if (user) {
@@ -63,8 +55,9 @@ const registerStep1 = asyncHandler(async (req, res) => {
     res.status(201).json({
       _id: user._id,
       email: user.email,
-      registrationStep: user.registrationStep,
-      message: 'Step 1 completed successfully'
+      registrationCompleted: user.registrationCompleted,
+      documentsUploaded: user.documentsUploaded,
+      message: 'Registration submitted successfully. Please upload documents.'
     });
   } else {
     res.status(400);
@@ -72,13 +65,10 @@ const registerStep1 = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update registration step
-// @route   PUT /api/auth/register/step/:stepNumber
+// @desc    Upload documents
+// @route   POST /api/auth/upload-documents
 // @access  Private
-const updateRegistrationStep = asyncHandler(async (req, res) => {
-  const { stepNumber } = req.params;
-  const stepData = req.body;
-
+const uploadDocuments = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (!user) {
@@ -86,56 +76,33 @@ const updateRegistrationStep = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Update based on step number
-  switch (parseInt(stepNumber)) {
-    case 2:
-      user.owner = stepData;
-      break;
-    case 3:
-      user.primaryContact = stepData;
-      break;
-    case 4:
-      user.licenses = {
-        ...stepData,
-        deaExpiration: new Date(stepData.deaExpiration),
-        stateLicenseExpiration: new Date(stepData.stateLicenseExpiration)
-      };
-      break;
-    case 5:
-      user.pharmacyInfo = {
-        ...stepData,
-        numberOfLocations: parseInt(stepData.numberOfLocations)
-      };
-      break;
-    case 6:
-      user.referralInfo = {
-        ...stepData,
-        acceptedTerms: stepData.acceptedTerms === 'true'
-      };
-      break;
-    case 7:
-      user.documents = stepData;
-      user.registrationCompleted = true;
-      
-      // Send verification email to admin
-      await sendAdminNotification(user);
-      
-      // Send confirmation email to user
-      await sendVerificationEmail(user);
-      break;
-    default:
-      res.status(400);
-      throw new Error('Invalid step number');
-  }
+  // Update documents
+  user.documents = {
+    deaLicense: req.body.deaLicense,
+    stateLicense: req.body.stateLicense,
+    businessLicense: req.body.businessLicense,
+    einDocument: req.body.einDocument,
+    w9Form: req.body.w9Form,
+    voidedCheck: req.body.voidedCheck,
+    additionalDoc1: req.body.additionalDoc1,
+    additionalDoc2: req.body.additionalDoc2,
+    uploadedAt: new Date()
+  };
 
-  user.registrationStep = parseInt(stepNumber);
+  user.documentsUploaded = true;
+  user.registrationCompleted = true;
+
   const updatedUser = await user.save();
+
+  // Send verification emails
+  await sendAdminNotification(updatedUser);
+  await sendVerificationEmail(updatedUser);
 
   res.json({
     _id: updatedUser._id,
-    registrationStep: updatedUser.registrationStep,
     registrationCompleted: updatedUser.registrationCompleted,
-    message: `Step ${stepNumber} completed successfully`
+    documentsUploaded: updatedUser.documentsUploaded,
+    message: 'Documents uploaded successfully. Your account is pending verification.'
   });
 });
 
@@ -159,7 +126,7 @@ const loginUser = asyncHandler(async (req, res) => {
     res.json({
       _id: user._id,
       email: user.email,
-      legalBusinessName: user.legalBusinessName,
+      legalBusinessName: user.registrationData?.step1?.legalBusinessName,
       isVerified: user.isVerified,
       verificationStatus: user.verificationStatus
     });
@@ -194,45 +161,16 @@ const getUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
-// @access  Private
-const updateUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-
-  if (user) {
-    user.email = req.body.email || user.email;
-    user.legalBusinessName = req.body.legalBusinessName || user.legalBusinessName;
-    user.phone = req.body.phone || user.phone;
-
-    if (req.body.password) {
-      user.password = req.body.password;
-    }
-
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      email: updatedUser.email,
-      legalBusinessName: updatedUser.legalBusinessName,
-      message: 'Profile updated successfully'
-    });
-  } else {
-    res.status(404);
-    throw new Error('User not found');
-  }
-});
-
-// @desc    Check registration status
+// @desc    Get registration status
 // @route   GET /api/auth/registration-status
 // @access  Private
 const getRegistrationStatus = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('registrationStep registrationCompleted verificationStatus isVerified');
+  const user = await User.findById(req.user._id).select('registrationCompleted documentsUploaded verificationStatus isVerified');
 
   if (user) {
     res.json({
-      registrationStep: user.registrationStep,
       registrationCompleted: user.registrationCompleted,
+      documentsUploaded: user.documentsUploaded,
       verificationStatus: user.verificationStatus,
       isVerified: user.isVerified
     });
@@ -243,11 +181,10 @@ const getRegistrationStatus = asyncHandler(async (req, res) => {
 });
 
 export {
-  registerStep1,
-  updateRegistrationStep,
+  registerUser,
+  uploadDocuments,
   loginUser,
   logoutUser,
   getUserProfile,
-  updateUserProfile,
   getRegistrationStatus
 };

@@ -13,8 +13,15 @@ const protect = asyncHandler(async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded.userId).select('-password');
+      
+      if (!req.user) {
+        res.status(401);
+        throw new Error('User not found');
+      }
+      
       next();
     } catch (error) {
+      console.error('JWT verification failed:', error.message);
       res.status(401);
       throw new Error('Not authorized, token failed');
     }
@@ -26,7 +33,9 @@ const protect = asyncHandler(async (req, res, next) => {
 
 // Admin middleware
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  // For now, we'll use a simple email check
+  // You should implement proper role-based authorization
+  if (req.user && req.user.email === 'admin@matchrx.com') {
     next();
   } else {
     res.status(401);

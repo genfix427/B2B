@@ -18,6 +18,8 @@ import Contact from './pages/Contact'
 
 import Register from './pages/Register.jsx';
 import Login from './pages/Login.jsx';
+import Dashboard from './pages/vendors/Dashboard.jsx';
+import Profile from './pages/vendors/Profile.jsx';
 // import Dashboard from './pages/Dashboard.jsx';
 // import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 // import PendingVerification from './pages/PendingVerification.jsx';
@@ -42,14 +44,15 @@ function App() {
           {/* <Route path="/pending-verification" element={<PendingVerification />} /> */}
 
           {/* Protected Vendor Routes */}
-          {/* <Route path="/" element={
+          <Route path="/vendor" element={
             <PrivateRoute>
               <Layout />
             </PrivateRoute>
           }>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
-          </Route> */}
+          </Route>
+              <Route path="/vendor/profile" element={<Profile />} />
 
           {/* Admin Routes */}
           {/* <Route path="/admin/*" element={
